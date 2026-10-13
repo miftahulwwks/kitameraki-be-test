@@ -1,24 +1,33 @@
-import { CosmosClient } from "@azure/cosmos";
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
+import {
+  app,
+  HttpRequest,
+  HttpResponseInit,
+  InvocationContext,
+} from "@azure/functions";
+import { errorResponse, RequestValidationError } from "../services/http-error";
+import { removeTasks } from "../services/task.service";
 
-export async function BulkDeleteTasks(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-    context.log(`Http function processed request for url "${request.url}"`);
-    const body = await request.json() as string[];
-    const organizationId = request.query.get('organizationId');
+export async function BulkDeleteTasks(
+  request: HttpRequest,
+  context: InvocationContext,
+): Promise<HttpResponseInit> {
+  try {
+    const ids: unknown = await request.json();
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new RequestValidationError(
+        "Request body must contain at least one task ID.",
+      );
+    }
+    await removeTasks(ids);
+    return { status: 204 };
+  } catch (error) {
+    return errorResponse(error, context);
+  }
+}
 
-    const client = new CosmosClient("this is a connection string");
-    body.forEach(async element => {
-        await client.database("TaskApp")
-        .container("Tasks")
-        .item(element, organizationId)
-        .delete();
-    });
-
-    return { status: 200 };
-};
-
-app.http('BulkDeleteTasks', {
-    methods: ['DELETE'],
-    authLevel: 'anonymous',
-    handler: BulkDeleteTasks
+app.http("BulkDeleteTasks", {
+  methods: ["DELETE"],
+  route: "tasks/bulk-delete",
+  authLevel: "anonymous",
+  handler: BulkDeleteTasks,
 });

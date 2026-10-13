@@ -9,11 +9,11 @@
     },
     "organizationId": {
       "type": "string",
-      "format": "uuid",
-      "description": "Unique identifier of the organization to which the task belongs"
+      "description": "Partition key identifying the task organization"
     },
     "title": {
       "type": "string",
+      "minLength": 1,
       "maxLength": 100,
       "description": "Title of the task"
     },
@@ -24,18 +24,18 @@
     },
     "dueDate": {
       "type": "string",
-      "format": "date-time",
-      "description": "Due date and time for the task"
+      "format": "date",
+      "description": "Due date for the task"
     },
     "priority": {
       "type": "string",
-      "enum": ["low", "medium", "high"],
+      "enum": ["Low", "Medium", "High"],
       "description": "Priority level of the task"
     },
     "status": {
       "type": "string",
-      "enum": ["todo", "in-progress", "completed"],
-      "description": "Status of the task"
+      "enum": ["Pending", "In Progress", "Completed"],
+      "description": "Current task status"
     },
     "tags": {
       "type": "array",
@@ -46,6 +46,18 @@
       "description": "Tags associated with the task"
     }
   },
-  "required": ["id", "organizationId", "title", "status"],
-  "additionalProperties": false
+  "required": [
+    "id",
+    "organizationId",
+    "title",
+    "description",
+    "priority",
+    "status",
+    "tags"
+  ],
+  "additionalProperties": {
+    "type": "string",
+    "maxLength": 2000,
+    "description": "Custom task form field"
+  }
 }

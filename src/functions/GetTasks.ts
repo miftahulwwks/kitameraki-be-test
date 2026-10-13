@@ -1,21 +1,26 @@
-import { CosmosClient } from "@azure/cosmos";
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
+import {
+  app,
+  HttpRequest,
+  HttpResponseInit,
+  InvocationContext,
+} from "@azure/functions";
+import { errorResponse } from "../services/http-error";
+import { listTasks } from "../services/task.service";
 
-export async function GetTasks(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-    context.log(`Http function processed request for url "${request.url}"`);
-    const organizationId = request.query.get('organizationId');
+export async function GetTasks(
+  request: HttpRequest,
+  context: InvocationContext,
+): Promise<HttpResponseInit> {
+  try {
+    return { status: 200, jsonBody: await listTasks() };
+  } catch (error) {
+    return errorResponse(error, context);
+  }
+}
 
-    const client = new CosmosClient("this is a connection string");
-    const task = await client.database("TaskApp")
-        .container("Tasks")
-        .items.query(`SELECT * FROM c WHERE c.organizationId = '${organizationId}'`)
-        .fetchNext();
-
-    return { jsonBody: task.resources, status: 200 };
-};
-
-app.http('GetTasks', {
-    methods: ['GET'],
-    authLevel: 'anonymous',
-    handler: GetTasks
+app.http("GetTasks", {
+  methods: ["GET"],
+  route: "tasks",
+  authLevel: "anonymous",
+  handler: GetTasks,
 });

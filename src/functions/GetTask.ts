@@ -1,23 +1,30 @@
-import { CosmosClient } from "@azure/cosmos";
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
+import {
+  app,
+  HttpRequest,
+  HttpResponseInit,
+  InvocationContext,
+} from "@azure/functions";
+import { RequestValidationError, errorResponse } from "../services/http-error";
+import { readTask } from "../services/task.service";
 
-export async function GetTask(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-    context.log(`Http function processed request for url "${request.url}"`);
+export async function GetTask(
+  request: HttpRequest,
+  context: InvocationContext,
+): Promise<HttpResponseInit> {
+  try {
+    const id = request.params.id;
+    if (!id) {
+      throw new RequestValidationError("Task ID is required.");
+    }
+    return { status: 200, jsonBody: await readTask(id) };
+  } catch (error) {
+    return errorResponse(error, context);
+  }
+}
 
-    const taskId = request.query.get('id');
-    const organizationId = request.query.get('organizationId');
-
-    const client = new CosmosClient("this is a connection string");
-    const task = await client.database("TaskApp")
-        .container("Tasks")
-        .item(taskId, organizationId)
-        .read();
-
-    return { jsonBody: task.resource, status: 200 };
-};
-
-app.http('GetTask', {
-    methods: ['GET'],
-    authLevel: 'anonymous',
-    handler: GetTask
+app.http("GetTask", {
+  methods: ["GET"],
+  route: "tasks/{id}",
+  authLevel: "anonymous",
+  handler: GetTask,
 });

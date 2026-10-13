@@ -8,7 +8,8 @@
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
     "start": "func start",
-    "test": "echo \"No tests yet...\""
+    "storage": "azurite --silent --location .local/azurite",
+    "test": "npm run build && node --test tests/*.test.cjs"
   },
   "dependencies": {
     "@azure/cosmos": "^4.0.0",
@@ -16,8 +17,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.x",
+    "azurite": "^3.37.0",
     "rimraf": "^5.0.0",
-    "typescript": "^4.0.0"
+    "typescript": "^5.9.3"
   },
   "main": "dist/src/{index.js,functions/*.js}"
 }
